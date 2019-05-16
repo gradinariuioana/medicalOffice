@@ -1,0 +1,20 @@
+concediu 	- urgenta -> 6 zile (criza renala etc.) -- platite 100%
+			- obisnuit (entorsa, raceala) perioada mai lunga 10 zile, 15 zile -> plataite doar 75%
+			- cronic 1 luna pe boala ->
+			- gravide 2-3 luni
+			- COD DE BOALA
+			ADD CONCEDIU -> ADD CONSULT
+programare 	- data
+			- motiv
+reteta		- diagnostic
+			- data emitere
+			- tip: simpla sau compensata
+			- compensare (eventual)
+			ADD RETETA -> ADD CONSULT
+			
+TRIMITERE 	- alt medic cu specialit
+			- diagnostic
+			- data emitere
+				ADD TRIMITERE -> ADD CONSULT
+				
+
