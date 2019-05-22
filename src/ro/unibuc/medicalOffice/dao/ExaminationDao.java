@@ -1,5 +1,6 @@
 package ro.unibuc.medicalOffice.dao;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.domain.Diagnosis;
 import ro.unibuc.medicalOffice.domain.Doctor;
@@ -26,13 +27,25 @@ public class ExaminationDao {
         aux_list[aux_list.length - 1] = ob;
         examinations = aux_list;
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
-        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String strDate = dateFormat.format(date);
         String details = strDate+","+patient.getCnp()+","+doctor.getFirstName()+","+doctor.getLastName();
         readerWriter.writeCsv("Examinations", details);
+
+        try {
+            String[] args = new String[4];
+            args[0] = strDate;
+            args[1] = diagnosis.getDescription();
+            args[2] = doctor.getPhone_number();
+            args[3] = patient.getCnp();
+            DBConnection.write("examinations", args);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
-    public void addExaminationFromCsv(Date date, Diagnosis diagnosis, Doctor doctor, Patient patient){
+    public void readExamination(Date date, Diagnosis diagnosis, Doctor doctor, Patient patient){
         Examination ob = new Examination(date, diagnosis, doctor, patient);
         Examination[] aux_list = new Examination[examinations.length + 1];
 

@@ -1,5 +1,6 @@
 package ro.unibuc.medicalOffice.dao;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.domain.Diagnosis;
 
@@ -22,9 +23,18 @@ public class DiagnosisDao {
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
         String details = description;
         readerWriter.writeCsv("Diagnoses", details);
+
+        try {
+            String[] args = new String[1];
+            args[0] = description;
+            DBConnection.write("diagnoses", args);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
-    public void addDiagnosisFromCsv(String description){
+    public void readDiagnosis(String description){
         Diagnosis ob = new Diagnosis(description);
         Diagnosis[] aux_list = new Diagnosis[diagnoses.length + 1];
 

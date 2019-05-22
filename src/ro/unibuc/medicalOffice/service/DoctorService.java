@@ -1,10 +1,12 @@
 package ro.unibuc.medicalOffice.service;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.dao.*;
 import ro.unibuc.medicalOffice.domain.*;
 
-import javax.print.Doc;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -22,8 +24,11 @@ public class DoctorService {
     private ExaminationDao examinations;
     private DrugDao drugs;
     private DiagnosisDao diagnoses;
+    private Connection connection;
+    private String phonenb;
 
-    public DoctorService(){
+    public DoctorService(String phone){
+        /*
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
         readerWriter.readCsv("Doctors");
         DoctorDao doctors = readerWriter.getDoctors();
@@ -52,9 +57,48 @@ public class DoctorService {
         readerWriter.readCsv("Examinations");
         ExaminationDao examinations = readerWriter.getExaminations();
         setExaminations(examinations);
+        */
+        try {
+            connection = DBConnection.getInstance();
+            DBConnection.read("Doctors");
+            DoctorDao doctors = DBConnection.getDoctors();
+            setDoctors(doctors);
+            DBConnection.read("Patients");
+            PatientDao patients = DBConnection.getPatients();
+            setPatients(patients);
+            DBConnection.read("Drugs");
+            DrugDao drugs = DBConnection.getDrugs();
+            setDrugs(drugs);
+            DBConnection.read("Diagnoses");
+            DiagnosisDao diagnoses = DBConnection.getDiagnoses();
+            setDiagnoses(diagnoses);
+            DBConnection.read("Appointments");
+            AppointmentDao appointments = DBConnection.getAppointments();
+            setAppointments(appointments);
+            DBConnection.read("Referrals");
+            ReferralDao referrals = DBConnection.getReferrals();
+            setReferrals(referrals);
+            DBConnection.read("SickLeaveCertificates");
+            SickLeaveCertificateDao sickLeaveCertificates = DBConnection.getSickLeaveCertificates();
+            setSickLeaveCertificates(sickLeaveCertificates);
+            DBConnection.read("Prescriptions");
+            PrescriptionDao prescriptions = DBConnection.getPrescriptions();
+            setPrescriptions(prescriptions);
+            DBConnection.read("Examinations");
+            ExaminationDao examinations = DBConnection.getExaminations();
+            setExaminations(examinations);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        setPhonenb(phone);
+
     }
 
     public Doctor enter () {
+        String line;
+        Doctor you = doctors.getDoctor(phonenb);
+        /*
         String firstName;
         String lastName;
         String line;
@@ -77,7 +121,7 @@ public class DoctorService {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+        }*/
         return you;
     }
 
@@ -94,64 +138,37 @@ public class DoctorService {
         return result.toArray(new Appointment[0]);
     }
 
-    public void writePrescription (){
-        Doctor you = enter();
-        String line;
-        Date date;
-        while (true) {
-            try {
-                System.out.println("Please, provide a date:");
-                line = new Scanner(System.in).nextLine();
-                DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                date = format.parse(line);
-                break;
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
-        Patient patient;
-        while(true){
-            try{
-                System.out.println("Please, provide patient's cnp:");
-                line = new Scanner(System.in).nextLine();
-                String cnp = line;
-                patient = patients.getPatient(cnp);
-                if (patient!=null)
-                    break;
-                else {
-                    Exception e = new Exception("Pacientul nu se afla in baza de date!");
-                    throw e;
+    public void writePrescription (String adate, String patient_cnp, List<String> provideddrugs) throws Exception{
+        Date date = null;
+        Patient patient = patients.getPatient(patient_cnp);
+        try{
+            DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+            date = format.parse(adate);
+            System.out.println(date);}
+        catch (Exception e){
+            System.out.println("aixi");}
+
+        Prescription prescription = prescriptions.getPrescription(date, patient, doctors.getDoctor(phonenb));
+        try{
+            if (prescription == null) {
+                Set<Drug> auxdrugs = new HashSet<>();
+                for (String s: provideddrugs){
+                    String [] rez = s.split(", +");
+                    String drugName = rez[0];
+                    String drugConcentration = rez[1];
+                    Double drugQuantity = Double.parseDouble(rez[2]);
+                    Drug aux = new Drug(drugName, drugConcentration, drugQuantity);
+                    auxdrugs.add(aux);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+                prescriptions.addPrescription(date, doctors.getDoctor(phonenb), patient, auxdrugs);
+                System.out.println("\n\n\nYour Prescription has been written!\n\n\n");
+                csvReaderWriter.getInstance().writeCsv("Doctor: "+doctors.getDoctor(phonenb).getFirstName()+" "+doctors.getDoctor(phonenb).getLastName()+" wrote a prescription for "+patient.getCnp());
+            } else {
+                throw new Exception("The prescription already exists!");
             }
+        } finally {
+
         }
-        Set<Drug> d= new HashSet<>();
-        while(true){
-            System.out.println("Please provide a drug name: ");
-            line=new Scanner(System.in).nextLine();
-            String name = line;
-            System.out.println("Please provide a concentration: ");
-            line=new Scanner(System.in).nextLine();
-            String concentration = line;
-            System.out.println("Please provide a quantity: ");
-            line=new Scanner(System.in).nextLine();
-            double quantity = Double.parseDouble(line);
-            Drug drug = drugs.getDrug(name);
-            if (drug == null || !drug.getConcentration().equals(concentration) || drug.getQuantity() != quantity) {
-                System.out.println("Medicamentul nu exista in baza de date, dar va fi introdus!");
-                drugs.addDrug(name, concentration, quantity);
-            }
-            drug = drugs.getDrug(name);
-            d.add(drug);
-            System.out.println("Do you wish to add another drug? (y/n) ");
-            line=new Scanner(System.in).nextLine();
-            if (line.equals("n"))
-                break;
-        }
-        prescriptions.addPrescription(date, you, patient, d);
-        System.out.println("Your prescription has been added!");
-        csvReaderWriter.getInstance().writeCsv("Doctor: "+you.getFirstName()+" "+you.getLastName()+" wrote a prescription for "+patient.getCnp());
     }
 
     public void writeReferral () {
@@ -162,7 +179,7 @@ public class DoctorService {
             try {
                 System.out.println("Please, provide a date:");
                 line = new Scanner(System.in).nextLine();
-                DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                DateFormat format = new SimpleDateFormat("yyyy-mm-dd");
                 date = format.parse(line);
                 break;
             } catch (ParseException e) {
@@ -224,100 +241,53 @@ public class DoctorService {
         csvReaderWriter.getInstance().writeCsv("Doctor: "+you.getFirstName()+" "+you.getLastName()+" wrote a referral for "+patient.getCnp());
     }
 
-    public void writeSickLeaveCertificate () {
-        Doctor you = enter();
-        String line;
-        Date date;
-        while (true) {
-            try {
-                System.out.println("Please, provide a starting date:");
-                line = new Scanner(System.in).nextLine();
-                DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                date = format.parse(line);
-                break;
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
-        Patient patient;
-        while (true) {
-            try {
-                System.out.println("Please, provide patient's cnp:");
-                line = new Scanner(System.in).nextLine();
-                String cnp = line;
-                patient = patients.getPatient(cnp);
-                if (patient != null)
-                    break;
-                else {
-                    Exception e = new Exception("Pacientul nu se afla in baza de date!");
-                    throw e;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("Please provide a diagnosis!: ");
-        line = new Scanner(System.in).nextLine();
-        Diagnosis diagnosis = diagnoses.getDiagnosis(line);
-        if (diagnosis == null)
-            diagnoses.addDiagnosis(line);
-        diagnosis = diagnoses.getDiagnosis(line);
-        System.out.println("Please provide a type: ");
-        line = new Scanner(System.in).nextLine();
-        String type = line;
-        if (type.equals("Urgent")){
-            sickLeaveCertificates.addSickLeaveCertificate(date, diagnosis, you, patient);
-        }
-        else {
-            System.out.println("Please provide a number of days: ");
-            line = new Scanner(System.in).nextLine();
-            sickLeaveCertificates.addSickLeaveCertificate(date, type, Integer.parseInt(line), diagnosis, you, patient);
-        }
-        System.out.println("The certificate has been added!");
-        csvReaderWriter.getInstance().writeCsv("Doctor: "+you.getFirstName()+" "+you.getLastName()+" wrote a sick leave certificate for "+patient.getCnp());
-    }
+    public void writeSickLeaveCertificate (String adate, String type, int numberOfDays, String diagnosis_description, String patient_cnp) throws Exception
+    {
+        Date date = null;
+        Patient patient = patients.getPatient(patient_cnp);
+        try{
+            DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+            date = format.parse(adate);
+            System.out.println(date);}
+        catch (Exception e){e.printStackTrace();}
 
-    public void noteExamination () {
-        Doctor you = enter();
-        String line;
-        Date date;
-        while (true) {
-            try {
-                System.out.println("Please, provide a date:");
-                line = new Scanner(System.in).nextLine();
-                DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                date = format.parse(line);
-                break;
-            } catch (ParseException e) {
-                e.printStackTrace();
+        SickLeaveCertificate sickLeaveCertificate = sickLeaveCertificates.getSickLeaveCertificate(date, type, numberOfDays, doctors.getDoctor(phonenb), patient);
+        try{
+            if (sickLeaveCertificate == null) {
+                sickLeaveCertificates.addSickLeaveCertificate(date, type, numberOfDays, diagnoses.getDiagnosis(diagnosis_description), doctors.getDoctor(phonenb), patient);
+                System.out.println("\n\n\nYour Sick Leave Certificate has been added to the db!\n\n\n");
+                csvReaderWriter.getInstance().writeCsv("Written SLCertificate for Doctor phone_nb: "+doctors.getDoctor(phonenb).getPhone_number());
+            } else {
+                throw new Exception("The SLCertificate already exists!");
             }
-        }
-        Patient patient;
-        while (true) {
-            try {
-                System.out.println("Please, provide patient's cnp:");
-                line = new Scanner(System.in).nextLine();
-                String cnp = line;
-                patient = patients.getPatient(cnp);
-                if (patient != null)
-                    break;
-                else {
-                    Exception e = new Exception("Pacientul nu se afla in baza de date!");
-                    throw e;
+        } finally {
+
+        } }
+
+    public void noteExamination (String adate, String diagnosis_description, String patient_cnp) throws Exception {
+        Date date = null;
+        Patient patient = patients.getPatient(patient_cnp);
+        try{
+            DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+            date = format.parse(adate);
+            System.out.println(date);}
+        catch (Exception e){e.printStackTrace();}
+
+        Examination examination = examinations.getExamination(date, patient, doctors.getDoctor(phonenb));
+        try{
+            if (examination == null) {
+                if (diagnoses.getDiagnosis(diagnosis_description) == null){
+                    diagnoses.addDiagnosis(diagnosis_description);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+                examinations.addExamination(date, diagnoses.getDiagnosis(diagnosis_description), doctors.getDoctor(phonenb), patient);
+                System.out.println("\n\n\nYour Examination has been noted!\n\n\n");
+                csvReaderWriter.getInstance().writeCsv("Noted Examination for Doctor phone_nb: "+doctors.getDoctor(phonenb).getPhone_number());
+            } else {
+                throw new Exception("The examination already exists!");
             }
+        } finally {
+
         }
-        System.out.println("Please provide a diagnosis!: ");
-        line = new Scanner(System.in).nextLine();
-        Diagnosis diagnosis = diagnoses.getDiagnosis(line);
-        if (diagnosis == null)
-            diagnoses.addDiagnosis(line);
-        diagnosis = diagnoses.getDiagnosis(line);
-        examinations.addExamination(date, diagnosis, you, patient);
-        System.out.println("The examination has been added!");
-        csvReaderWriter.getInstance().writeCsv("Doctor: "+you.getFirstName()+" "+you.getLastName()+" noted an examination for "+patient.getCnp());
     }
 
     public void setExaminations(ExaminationDao examinations) {
@@ -371,5 +341,13 @@ public class DoctorService {
     }
     public ExaminationDao getExaminations() {
         return examinations;
+    }
+
+    public String getPhonenb() {
+        return phonenb;
+    }
+
+    public void setPhonenb(String phonenb) {
+        this.phonenb = phonenb;
     }
 }

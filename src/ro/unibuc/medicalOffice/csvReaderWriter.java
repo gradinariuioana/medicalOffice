@@ -6,9 +6,11 @@ import ro.unibuc.medicalOffice.domain.Drug;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
+
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -28,7 +30,8 @@ public class csvReaderWriter {
     private static PatientDao patients = new PatientDao();
     private static DiagnosisDao diagnoses = new DiagnosisDao();
 
-    private csvReaderWriter(){};
+    private csvReaderWriter(){
+    }
 
     public static csvReaderWriter getInstance() {
         if (instance == null)
@@ -36,9 +39,10 @@ public class csvReaderWriter {
         return instance;
     }
 
+    //Adds info to audit csv
     public void writeCsv(String action) {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        String toWritePath = "C:\\Users\\Ioana\\Desktop\\University\\Anul2 Semestrul2\\Programare Avansata pe Obiecte\\Cabinet\\csv\\audit.csv";
+        String toWritePath = "C:\\Users\\Ioana\\Desktop\\University\\Anul2 Semestrul2\\PAO\\Cabinet\\csv\\audit.csv";
         try (FileWriter fileWriter = new FileWriter(toWritePath, true)) {
 
             fileWriter.append(action);
@@ -51,113 +55,109 @@ public class csvReaderWriter {
         }
     }
 
+    //Adds info to database csv
     public void writeCsv(String file, String details) {
-        String toWritePath = "C:\\Users\\Ioana\\Desktop\\University\\Anul2 Semestrul2\\Programare Avansata pe Obiecte\\Cabinet\\csv\\"+file+".csv";
+        String toWritePath = "C:\\Users\\Ioana\\Desktop\\University\\Anul2 Semestrul2\\PAO\\Cabinet\\csv\\"+file+".csv";
         try (FileWriter fileWriter = new FileWriter(toWritePath, true)){
             fileWriter.append(details);
             fileWriter.append("\n");
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-
-
+    //Reads info from database csv
     public void readCsv(String objectType) {
-        BufferedReader reader = null;
-        try {
-            String toReadPath = "C:\\Users\\Ioana\\Desktop\\University\\Anul2 Semestrul2\\Programare Avansata pe Obiecte\\Cabinet\\csv\\" + objectType + ".csv";
-            String line = "";
-            reader = new BufferedReader(new FileReader(toReadPath));
+        String toReadPath = "C:\\Users\\Ioana\\Desktop\\University\\Anul2 Semestrul2\\PAO\\Cabinet\\csv\\" + objectType + ".csv";
+        try (BufferedReader reader = new BufferedReader(new FileReader(toReadPath))){
+            String line;
             reader.readLine();
-            if (objectType == "Doctors") {
-                System.out.println("Reading doctors");
-                while ((line = reader.readLine()) != null) {
-                    String[] fields = line.split(",");
-                    if (fields.length > 0) {
-                        if (fields.length < 4) {
-                            doctors.addDoctorFromCsv(fields[0], fields[1], fields[2]);
-                        } else {
-                            doctors.addDoctorFromCsv(fields[0], fields[1], fields[2], fields[3]);
+            switch (objectType) {
+                case "Doctors":
+                    System.out.println("Reading doctors");
+                    while ((line = reader.readLine()) != null) {
+                        String[] fields = line.split(",");
+                        if (fields.length > 0) {
+                            if (fields.length < 4) {
+                                doctors.readDoctor(fields[0], fields[1], fields[2]);
+                            } else {
+                                doctors.readDoctor(fields[0], fields[1], fields[2], fields[3]);
+                            }
                         }
                     }
-                }
-            }
-            else {
-                if (objectType == "Patients") {
+                    break;
+                case "Patients":
                     System.out.println("Reading patients");
                     while ((line = reader.readLine()) != null) {
                         String[] fields = line.split(",");
-                            patients.addPatientFromCsv(fields[0], fields[1], fields[2], fields[3], fields[4]);
+                            patients.readPatient(fields[0], fields[1], fields[2], fields[3], fields[4]);
                     }
-                } else {
-                    if (objectType == "Drugs") {
-                        System.out.println("Reading drugs");
-                        while ((line = reader.readLine()) != null) {
-                            String[] fields = line.split(",");
-                                drugs.addDrugFromCsv(fields[0], fields[1], Double.parseDouble(fields[2]));
-                        }
-                    } else {
-                        if (objectType == "Diagnoses") {
-                            System.out.println("Reading diagnoses");
-                            while ((line = reader.readLine()) != null) {
-                                String[] fields = line.split(",");
-                                    diagnoses.addDiagnosisFromCsv(fields[0]);
-                            }
-                        } else {
-                            Date date;
-                            if (objectType == "Appointments") {
-                                System.out.println("Reading appointments");
-                                while ((line = reader.readLine()) != null) {
-                                    String[] fields = line.split(",");
-                                    SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                                    date = format.parse(fields[0]);
-                                    appointments.addAppointmentFromCsv(date, fields[1], patients.getPatient(fields[2]), doctors.getDoctor(fields[3], fields[4]));
-                                }
-                            } else if (objectType == "Referrals") {
-                                System.out.println("Reading referrals");
-                                while ((line = reader.readLine()) != null) {
-                                    String[] fields = line.split(",");
-                                    SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                                    date = format.parse(fields[5]);
-                                        referrals.addReferralFromCsv(doctors.getDoctor(fields[0], fields[1]), doctors.getDoctor(fields[2], fields[3]), diagnoses.getDiagnosis(fields[4]), date, patients.getPatient(fields[6]));
-                                }
-                            }
-                            else if (objectType == "SickLeaveCertificates"){
-                                System.out.println("Reading SickLeaveCertificates");
-                                while ((line = reader.readLine()) != null) {
-                                    String[] fields = line.split(",");
-                                    SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                                    date = format.parse(fields[0]);
-                                    sickLeaveCertificates.addSickLeaveCertificateFromCsv(date, fields[1], parseInt(fields[2]), diagnoses.getDiagnosis(fields[3]), doctors.getDoctor(fields[4], fields[5]), patients.getPatient(fields[6]));
-                                }
-                            }
-                            else if (objectType == "Prescriptions"){
-                                System.out.println("Reading prescriptions");
-                                while ((line = reader.readLine()) != null) {
-                                    String[] fields = line.split(",");
-                                    SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                                    date = format.parse(fields[0]);
-                                    Set<Drug> d = new HashSet<>();
-                                    String[] medicine = fields[4].split(" ");
-                                    for (String m:medicine){
-                                        d.add(drugs.getDrug(m));
-                                    }
-                                    prescriptions.addPrescriptionFromCsv(date, doctors.getDoctor(fields[1], fields[2]), patients.getPatient(fields[3]), d);
-                                }
-                            } else if (objectType == "Examinations"){
-                                System.out.println("Reading Examinations");
-                                while ((line = reader.readLine()) != null) {
-                                    String[] fields = line.split(",");
-                                    SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                                    date = format.parse(fields[0]);
-                                    examinations.addExaminationFromCsv(date, diagnoses.getDiagnosis(fields[1]), doctors.getDoctor(fields[2], fields[3]), patients.getPatient(fields[4]));
-                                }
-                            }
-                        }
+                    break;
+                case "Drugs":
+                    System.out.println("Reading drugs");
+                    while ((line = reader.readLine()) != null) {
+                        String[] fields = line.split(",");
+                        drugs.readDrug(fields[0], fields[1], Double.parseDouble(fields[2]));
                     }
-                }
+                    break;
+                case "Diagnoses":
+                    System.out.println("Reading diagnoses");
+                    while ((line = reader.readLine()) != null) {
+                        String[] fields = line.split(",");
+                        diagnoses.readDiagnosis(fields[0]);
+                    }
+                    break;
+                case "Appointments":
+                    Date date;
+                    System.out.println("Reading appointments");
+                    while ((line = reader.readLine()) != null) {
+                        String[] fields = line.split(",");
+                        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                        date = format.parse(fields[0]);
+                        appointments.readAppointment(date, fields[1], patients.getPatient(fields[2]), doctors.getDoctor(fields[3], fields[4]));
+                    }
+                    break;
+                case "Referrals":
+                    System.out.println("Reading referrals");
+                    while ((line = reader.readLine()) != null) {
+                        String[] fields = line.split(",");
+                        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                        date = format.parse(fields[5]);
+                        referrals.readReferral(doctors.getDoctor(fields[0], fields[1]), doctors.getDoctor(fields[2], fields[3]), diagnoses.getDiagnosis(fields[4]), date, patients.getPatient(fields[6]));
+                    }
+                    break;
+                case "SickLeaveCertificates":
+                    System.out.println("Reading SickLeaveCertificates");
+                    while ((line = reader.readLine()) != null) {
+                        String[] fields = line.split(",");
+                        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                        date = format.parse(fields[0]);
+                        sickLeaveCertificates.readSickLeaveCertificate(date, fields[1], parseInt(fields[2]), diagnoses.getDiagnosis(fields[3]), doctors.getDoctor(fields[4], fields[5]), patients.getPatient(fields[6]));
+                    }
+                    break;
+                case "Prescriptions":
+                    System.out.println("Reading prescriptions");
+                    while ((line = reader.readLine()) != null) {
+                        String[] fields = line.split(",");
+                        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                        date = format.parse(fields[0]);
+                        Set<Drug> d = new HashSet<>();
+                        String[] medicine = fields[4].split(" ");
+                        for (String m : medicine) {
+                            d.add(drugs.getDrug(m));
+                        }
+                        prescriptions.readPrescription(date, doctors.getDoctor(fields[1], fields[2]), patients.getPatient(fields[3]), d);
+                    }
+                    break;
+                case "Examinations":
+                    System.out.println("Reading Examinations");
+                    while ((line = reader.readLine()) != null) {
+                        String[] fields = line.split(",");
+                        SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                        date = format.parse(fields[0]);
+                        examinations.readExamination(date, diagnoses.getDiagnosis(fields[1]), doctors.getDoctor(fields[2], fields[3]), patients.getPatient(fields[4]));
+                    }
+                    break;
             }
         } catch (Exception e) {
             e.printStackTrace();

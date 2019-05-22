@@ -1,11 +1,12 @@
 package ro.unibuc.medicalOffice.service;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.dao.*;
 import ro.unibuc.medicalOffice.domain.*;
 
+import java.sql.Connection;
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -20,8 +21,11 @@ public class PatientService {
     private ExaminationDao examinations;
     private DrugDao drugs;
     private DiagnosisDao diagnoses;
+    private Connection connection;
+    private String cnp;
 
-    public PatientService(){
+    public PatientService(String cnp){
+        /*
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
         readerWriter.readCsv("Doctors");
         DoctorDao doctors = readerWriter.getDoctors();
@@ -50,28 +54,47 @@ public class PatientService {
         readerWriter.readCsv("Examinations");
         ExaminationDao examinations = readerWriter.getExaminations();
         setExaminations(examinations);
+        */
+        try {
+            connection = DBConnection.getInstance();
+            DBConnection.read("Doctors");
+            DoctorDao doctors = DBConnection.getDoctors();
+            setDoctors(doctors);
+            DBConnection.read("Patients");
+            PatientDao patients = DBConnection.getPatients();
+            setPatients(patients);
+            DBConnection.read("Drugs");
+            DrugDao drugs = DBConnection.getDrugs();
+            setDrugs(drugs);
+            DBConnection.read("Diagnoses");
+            DiagnosisDao diagnoses = DBConnection.getDiagnoses();
+            setDiagnoses(diagnoses);
+            DBConnection.read("Appointments");
+            AppointmentDao appointments = DBConnection.getAppointments();
+            setAppointments(appointments);
+            DBConnection.read("Referrals");
+            ReferralDao referrals = DBConnection.getReferrals();
+            setReferrals(referrals);
+            DBConnection.read("SickLeaveCertificates");
+            SickLeaveCertificateDao sickLeaveCertificates = DBConnection.getSickLeaveCertificates();
+            setSickLeaveCertificates(sickLeaveCertificates);
+            DBConnection.read("Prescriptions");
+            PrescriptionDao prescriptions = DBConnection.getPrescriptions();
+            setPrescriptions(prescriptions);
+            DBConnection.read("Examinations");
+            ExaminationDao examinations = DBConnection.getExaminations();
+            setExaminations(examinations);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+        setCnp(cnp);
     }
 
     public Patient enter () {
-        String cnp;
         String line;
-        while (true) {
-            try {
-                System.out.println("Please, provide your cnp: ");
-                line = new Scanner(System.in).nextLine();
-                if (line.matches("[0-9]+") == true && line.length() == 13) {
-                    cnp = line;
-                    break;
-                } else {
-                    Exception e = new Exception("Wrong format");
-                    throw e;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
         Patient you = patients.getPatient(cnp);
-        if (you == null) {
+        /*if (you == null) {
             System.out.println("You do not seem to be in our database!\nWould you like to become our patient? (y/n) ");
             line = new Scanner(System.in).nextLine();
             if (line.equals("y") == true) {
@@ -93,14 +116,13 @@ public class PatientService {
         }
         else{
             System.out.println("Hi "+you.getFirstName()+" "+you.getLastName()+"! Welcome back!");
-        }
+        }*/
         return you;
     }
 
 
 
     public Appointment[] getAppointmentsForPatient (){
-        String cnp = enter().getCnp();
         List<Appointment> result = new ArrayList<>();
         for (int i = 0; i< appointments.getSize(); i++)
             if (appointments.getAppointment(i).getPatient().getCnp().equals(cnp)) {
@@ -112,7 +134,6 @@ public class PatientService {
     }
 
     public Referral[] getReferralsForPatient (){
-        String cnp = enter().getCnp();
         List<Referral> result = new ArrayList<>();
         for (int i = 0; i< referrals.getSize(); i++){
             if (referrals.getReferral(i).getPatient().getCnp().equals(cnp)){
@@ -125,7 +146,6 @@ public class PatientService {
     }
 
     public SickLeaveCertificate[] getSickLeaveCertificatesForPatient (){
-        String cnp = enter().getCnp();
         List<SickLeaveCertificate> result = new ArrayList<>();
         for (int i = 0; i< sickLeaveCertificates.getSize(); i++){
             if (sickLeaveCertificates.getSickLeaveCertificate(i).getPatient().getCnp().equals(cnp)){
@@ -138,7 +158,6 @@ public class PatientService {
     }
 
     public Prescription[] getPrescriptionsForPatient (){
-        String cnp = enter().getCnp();
         List<Prescription> result = new ArrayList<>();
         for (int i = 0; i< prescriptions.getSize(); i++){
             if (prescriptions.getPrescription(i).getPatient().getCnp().equals(cnp)){
@@ -151,7 +170,6 @@ public class PatientService {
     }
 
     public Examination[] getExaminationsForPatient (){
-        String cnp = enter().getCnp();
         List<Examination> result = new ArrayList<>();
         for (int i = 0; i< examinations.getSize(); i++){
             if (examinations.getExamination(i).getPatient().getCnp().equals(cnp)){
@@ -163,61 +181,27 @@ public class PatientService {
         return result.toArray(new Examination[0]);
     }
 
-    public void makeAppointment() {
-        Patient you = enter();
-        String line;
-        Date date;
-        while (true) {
-            try {
-                System.out.println("Please, provide a date (dd/MM/yyyy): ");
-                line = new Scanner(System.in).nextLine();
-                DateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                date = format.parse(line);
-                break;
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
+    public void makeAppointment(String adate, String motive, String doctor_first_name, String doctor_last_name) throws Exception {
+        Date date = null;
+        Doctor doctor = doctors.getDoctor(doctor_first_name, doctor_last_name);
+        try{
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        date = format.parse(adate);
+            System.out.println(date);}
+        catch (Exception e){e.printStackTrace();}
 
-        System.out.println("Please, provide a motive:");
-        line = new Scanner(System.in).nextLine();
-        String motive = line;
-        String doctor_first_name;
-        String doctor_last_name;
-        Doctor doctor = null;
-        while (true) {
-            try {
-                System.out.println("Please, provide the doctor's first name:");
-                line = new Scanner(System.in).nextLine();
-                doctor_first_name = line;
-                System.out.println("Please, provide the doctor's last name:");
-                line = new Scanner(System.in).nextLine();
-                doctor_last_name = line;
-                doctor = doctors.getDoctor(doctor_first_name, doctor_last_name);
-                if (doctor != null) {
-                    break;
-                } else {
-                    Exception e = new Exception("The doctor in not in our database! Would you like to try another doctor? (y/n) ");
-                    throw e;
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                line = new Scanner(System.in).nextLine();
-                if (line.equals("n")) {
-                    System.out.println("Thank you for using our service! Have a great day!");
-                    break;
-                }
+        Appointment appointment = appointments.getAppointment(date, patients.getPatient(cnp), doctor);
+        try{
+            if (appointment == null) {
+                appointments.addAppointment(date, motive, patients.getPatient(cnp), doctor);
+                System.out.println("\n\n\nYour Appointment has been scheduled!\n\n\n");
+                csvReaderWriter.getInstance().writeCsv("Made Appointment for Patient cnp: "+patients.getPatient(cnp).getCnp());
+            } else {
+                throw new Exception("The appointment already exists!");
             }
-        }
-        Appointment appointment = appointments.getAppointment(date, you, doctor);
-        if (appointment == null) {
-            appointments.addAppointment(date, motive, you, doctor);
-        } else {
-            System.out.println("The appointment already exists!");
-        }
-        System.out.println("\n\n\nYour Appointment has been scheduled!\n\n\n");
-        csvReaderWriter.getInstance().writeCsv("Made Appointment for Patient cnp: "+you.getCnp());
+        } finally {
 
+        }
     }
 
 
@@ -258,9 +242,11 @@ public class PatientService {
         this.diagnoses = diagnoses;
     }
 
+    public void setCnp(String cnp) {
+        this.cnp = cnp;
+    }
+
     //Getters
-
-
     public SickLeaveCertificateDao getSickLeaveCertificates() {
         return sickLeaveCertificates;
     }
@@ -296,6 +282,4 @@ public class PatientService {
     public DrugDao getDrugs() {
         return drugs;
     }
-
-
 }

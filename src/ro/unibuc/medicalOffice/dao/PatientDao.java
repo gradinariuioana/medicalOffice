@@ -1,5 +1,6 @@
 package ro.unibuc.medicalOffice.dao;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.domain.Patient;
 
@@ -21,9 +22,23 @@ public class PatientDao {
         patients = aux_list;
         String details = first_name+","+last_name+","+cnp+","+address+","+phone_number;
         readerWriter.writeCsv("Patients", details);
+
+        try {
+            String[] args = new String[5];
+            args[0] = cnp;
+            args[1] = first_name;
+            args[2] = last_name;
+            args[3] = address;
+            args[4] = phone_number;
+            DBConnection.write("patients", args);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 
-    public void addPatientFromCsv(String first_name, String last_name, String cnp, String address, String phone_number){
+    public void readPatient(String first_name, String last_name, String cnp, String address, String phone_number){
         Patient[] aux_list = new Patient[patients.length + 1];
         for(int i = 0; i < patients.length; i++)
             aux_list[i] = patients[i];

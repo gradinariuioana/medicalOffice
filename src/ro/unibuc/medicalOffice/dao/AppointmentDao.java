@@ -1,10 +1,12 @@
 package ro.unibuc.medicalOffice.dao;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.domain.Appointment;
 import ro.unibuc.medicalOffice.domain.Doctor;
 import ro.unibuc.medicalOffice.domain.Patient;
 
+import java.sql.Connection;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -24,14 +26,29 @@ public class AppointmentDao {
             aux_list[i] = appointments[i];
         aux_list[aux_list.length - 1] = ob;
         appointments = aux_list;
+
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
-        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String strDate = dateFormat.format(date);
+
         String details = strDate+","+motive+","+patient.getCnp()+","+doctor.getFirstName()+","+doctor.getLastName();
         readerWriter.writeCsv("Appointments", details);
+
+        try {
+            String[] args = new String[4];
+            String[] argstype = new String[4];
+            args[0] = strDate;
+            args[1] = motive;
+            args[2] = patient.getCnp();
+            args[3] = doctor.getPhone_number();
+            DBConnection.write("appointments", args);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
-    public void addAppointmentFromCsv(Date date, String motive, Patient patient, Doctor doctor){
+    public void readAppointment(Date date, String motive, Patient patient, Doctor doctor){
         Appointment ob = new Appointment(date, motive, patient, doctor);
         Appointment[] aux_list = new Appointment[appointments.length + 1];
 

@@ -55,7 +55,7 @@ public class Prescription implements  Comparable<Prescription>{
 
     public static class Comparators {
 
-        public static Comparator<Prescription> DATE = new Comparator<>() {
+        public static Comparator<Prescription> DATE = new Comparator<Prescription>() {
             @Override
             public int compare(Prescription a1, Prescription a2) {
                 return a1.date.compareTo(a2.date);

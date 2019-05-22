@@ -9,23 +9,6 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-        try {
-            Connection con = DBConnection.getInstance();
-            Statement statement = con.createStatement();
-            ResultSet rs = statement.executeQuery("select * from medicaloffice.patients");
-            while (rs.next())
-            {
-                String cnp = rs.getString("cnp");
-                String firstName = rs.getString("first_name");
-                String lastName = rs.getString("last_name");
-                String address = rs.getString("address");
-                System.out.println(cnp + firstName + lastName + address);
-            }
-            System.out.println("a mers");
-        }
-        catch (Exception E){
-            E.printStackTrace();
-        }
         /*
 
         System.out.println("Hello! Please choose the user mode: (Patient or Doctor)");

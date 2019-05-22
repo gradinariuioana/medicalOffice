@@ -1,5 +1,6 @@
 package ro.unibuc.medicalOffice.dao;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.domain.Drug;
 
@@ -23,9 +24,20 @@ public class DrugDao {
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
         String details = name+","+concentration+","+Double.toString(quantity);
         readerWriter.writeCsv("Drugs", details);
+
+        try {
+            String[] args = new String[3];
+            args[0] = concentration;
+            args[1] = name;
+            args[2] = Double.toString(quantity);
+            DBConnection.write("drugs", args);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
-    public void addDrugFromCsv(String name, String concentration, double quantity){
+    public void readDrug(String name, String concentration, double quantity){
         Drug ob = new Drug(name, concentration, quantity);
         Drug[] aux_list = new Drug[drugs.length + 1];
 

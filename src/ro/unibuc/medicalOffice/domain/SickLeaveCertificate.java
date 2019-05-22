@@ -79,7 +79,7 @@ public class SickLeaveCertificate implements Comparable<SickLeaveCertificate> {
 
     public static class Comparators {
 
-        public static Comparator<SickLeaveCertificate> DATE = new Comparator<>() {
+        public static Comparator<SickLeaveCertificate> DATE = new Comparator<SickLeaveCertificate>() {
             @Override
             public int compare(SickLeaveCertificate a1, SickLeaveCertificate a2) {
                 return a1.startingDate.compareTo(a2.startingDate);

@@ -1,5 +1,6 @@
 package ro.unibuc.medicalOffice.dao;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.domain.Diagnosis;
 import ro.unibuc.medicalOffice.domain.Doctor;
@@ -26,13 +27,26 @@ public class ReferralDao {
         aux_list[aux_list.length - 1] = ob;
         referrals = aux_list;
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
-        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String strDate = dateFormat.format(date);
         String details = fromDoctor.getFirstName()+","+fromDoctor.getLastName()+","+toDoctor.getFirstName()+","+toDoctor.getLastName()+","+diagnosis.getDescription()+","+strDate+","+patient.getCnp();
         readerWriter.writeCsv("Referrals", details);
+
+        try {
+            String[] args = new String[5];
+            args[0] = fromDoctor.getPhone_number();
+            args[1] = toDoctor.getPhone_number();
+            args[2] = diagnosis.getDescription();
+            args[3] = strDate;
+            args[4] = patient.getCnp();
+            DBConnection.write("referrals", args);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
-    public void addReferralFromCsv(Doctor fromDoctor, Doctor toDoctor, Diagnosis diagnosis, Date date, Patient patient){
+    public void readReferral(Doctor fromDoctor, Doctor toDoctor, Diagnosis diagnosis, Date date, Patient patient){
         Referral ob = new Referral(fromDoctor, toDoctor, diagnosis, date, patient);
         Referral[] aux_list = new Referral[referrals.length + 1];
 

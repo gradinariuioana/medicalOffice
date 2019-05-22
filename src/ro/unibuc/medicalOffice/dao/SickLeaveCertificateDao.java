@@ -1,5 +1,6 @@
 package ro.unibuc.medicalOffice.dao;
 
+import ro.unibuc.medicalOffice.DBConnection;
 import ro.unibuc.medicalOffice.csvReaderWriter;
 import ro.unibuc.medicalOffice.domain.Diagnosis;
 import ro.unibuc.medicalOffice.domain.Doctor;
@@ -26,11 +27,25 @@ public class SickLeaveCertificateDao {
         SickLeaveCertificate ob = new SickLeaveCertificate(startingDate, diagnosis, doctor, patient);
         aux_list[aux_list.length - 1] = ob;
         sickLeaveCertificates = aux_list;
-        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String strDate = dateFormat.format(startingDate);
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
         String details = strDate+","+ob.getType()+","+Integer.toString(ob.getNumberOfDays())+","+ob.getDiagnosis().getDescription()+","+","+doctor.getFirstName()+","+doctor.getLastName()+","+patient.getCnp();
         readerWriter.writeCsv("SickLeaveCertificates", details);
+
+        try {
+            String[] args = new String[6];
+            args[0] = strDate;
+            args[1] = ob.getType();
+            args[2] = Integer.toString(ob.getNumberOfDays());
+            args[3] = diagnosis.getDescription();
+            args[4] = doctor.getPhone_number();
+            args[5] = patient.getCnp();
+            DBConnection.write("sickleavecertificates", args);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
 
     }
 
@@ -43,14 +58,28 @@ public class SickLeaveCertificateDao {
         SickLeaveCertificate ob = new SickLeaveCertificate(startingDate, type, numberOfDays, diagnosis, doctor, patient);
         aux_list[aux_list.length - 1] = ob;
         sickLeaveCertificates = aux_list;
-        DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+        DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String strDate = dateFormat.format(startingDate);
         csvReaderWriter readerWriter = csvReaderWriter.getInstance();
         String details = strDate+","+type+","+Integer.toString(numberOfDays)+","+ob.getDiagnosis().getDescription()+","+doctor.getFirstName()+","+doctor.getLastName()+","+patient.getCnp();
         readerWriter.writeCsv("SickLeaveCertificates", details);
+
+        try {
+            String[] args = new String[6];
+            args[0] = strDate;
+            args[1] = ob.getType();
+            args[2] = Integer.toString(ob.getNumberOfDays());
+            args[3] = diagnosis.getDescription();
+            args[4] = doctor.getPhone_number();
+            args[5] = patient.getCnp();
+            DBConnection.write("sickleavecertificates", args);
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
-    public void addSickLeaveCertificateFromCsv (Date startingDate, Diagnosis diagnosis, Doctor doctor, Patient patient){
+    public void readSickLeaveCertificate(Date startingDate, Diagnosis diagnosis, Doctor doctor, Patient patient){
         SickLeaveCertificate[] aux_list = new SickLeaveCertificate[sickLeaveCertificates.length + 1];
 
         for(int i = 0; i < sickLeaveCertificates.length; i++)
@@ -62,7 +91,7 @@ public class SickLeaveCertificateDao {
 
     }
 
-    public void addSickLeaveCertificateFromCsv (Date startingDate, String type, int numberOfDays, Diagnosis diagnosis, Doctor doctor, Patient patient){
+    public void readSickLeaveCertificate(Date startingDate, String type, int numberOfDays, Diagnosis diagnosis, Doctor doctor, Patient patient){
         SickLeaveCertificate[] aux_list = new SickLeaveCertificate[sickLeaveCertificates.length + 1];
 
         for(int i = 0; i < sickLeaveCertificates.length; i++)

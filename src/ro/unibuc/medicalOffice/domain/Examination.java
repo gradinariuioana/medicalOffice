@@ -51,7 +51,7 @@ public class Examination implements Comparable<Examination> {
 
     public static class Comparators {
 
-        public static Comparator<Examination> DATE = new Comparator<>() {
+        public static Comparator<Examination> DATE = new Comparator<Examination>() {
             @Override
             public int compare(Examination a1, Examination a2) {
                 return a1.date.compareTo(a2.date);
